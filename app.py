@@ -4,6 +4,7 @@
 # @Site : 
 # @File : app.py
 # @Software: PyCharm
+import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
@@ -300,6 +301,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.clear_btn_C.setObjectName('clear_btn')
         self.clear_btn_C.setFixedSize(QtCore.QSize(130, 50))
         self.clear_btn_C.setCursor(QtCore.Qt.PointingHandCursor)
+        self.clear_btn_C.clicked.connect(lambda: self.result_list_C.clear())
         # C 框复制内容按钮
         self.copy_btn_C = QtWidgets.QPushButton('复  制')
         self.copy_btn_C.setObjectName('copy_btn')
@@ -394,7 +396,7 @@ class MainUi(QtWidgets.QMainWindow):
             btn.setFixedSize(QtCore.QSize(40, 40))
             btn.setCursor(QtCore.Qt.PointingHandCursor)
             btn.clicked.connect(self.on_num_btn_click)
-            self.prize_number_layout.addWidget(btn, idx / 11, idx % 11, 1, 1)
+            self.prize_number_layout.addWidget(btn, idx // 11, idx % 11, 1, 1)
         
         self.prize_number_frame.setLayout(self.prize_number_layout)
  
@@ -569,38 +571,42 @@ class MainUi(QtWidgets.QMainWindow):
 
         # 获取彩票号码个数
         prize_count = self.prize_spin.value()
+
+        lottery_nums_group_a = []
+        lottery_nums_group_b = []
         # 获取 A 输入框中的内容
-        text_a = self.text_edit_A.toPlainText()  # A框文本
+        text_a = self.text_edit_A.toPlainText().strip().strip('\n')  # A框文本
         if filter_type != 5:
             if not text_a:
                 QMessageBox.warning(self, "提示", "A 框未输入彩票号码！", QMessageBox.Yes, QMessageBox.Yes)
                 return
             conversion_a = text_to_nums(text_a, prize_count)
             if conversion_a['code'] == -1:
-                QMessageBox.warning(self, "提示", "A 框第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(conversion_a.data, self.prize_count),
+                QMessageBox.warning(self, "提示", "A 框第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(conversion_a['data'], self.prize_count),
                                     QMessageBox.Yes, QMessageBox.Yes)
-            elif conversion_a['code'] == -2:
+                return
+            if conversion_a['code'] == -2:
                 QMessageBox.warning(self, "提示", "A 框第{}行彩票号码存在重复号码！".format(conversion_a.data),
                                     QMessageBox.Yes, QMessageBox.Yes)
-            else:
-                lottery_nums_group_a = conversion_a['data']
+                return
+            lottery_nums_group_a = conversion_a['data']
 
         # 获取 B 框文本
-        text_b = self.text_edit_B.toPlainText()  # B框文本
+        text_b = self.text_edit_B.toPlainText().strip().strip('\n')  # B框文本
         if filter_type != 4:
             if not text_b:
                 QMessageBox.warning(self, "提示", "B 框未输入彩票号码！", QMessageBox.Yes, QMessageBox.Yes)
                 return
             conversion_b = text_to_nums(text_b, prize_count)
-            conversion_a = text_to_nums(text_a, prize_count)
             if conversion_b['code'] == -1:
-                QMessageBox.warning(self, "提示", "B 框第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(conversion_b.data, self.prize_count),
+                QMessageBox.warning(self, "提示", "B 框第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(conversion_b['data'], self.prize_count),
                                     QMessageBox.Yes, QMessageBox.Yes)
-            elif conversion_b['code'] == -2:
+                return
+            if conversion_b['code'] == -2:
                 QMessageBox.warning(self, "提示", "B 框第{}行彩票号码存在重复号码！".format(conversion_b.data),
                                     QMessageBox.Yes, QMessageBox.Yes)
-            else:
-                lottery_nums_group_b = conversion_b['data']
+                return
+            lottery_nums_group_b = conversion_b['data']
 
         # 根据下拉列表选择的方式进行过滤
         match_result = []
@@ -621,7 +627,6 @@ class MainUi(QtWidgets.QMainWindow):
             match_result, mismatch_result = inner_filter_any(lottery_nums_group_a, duplicate_left, duplicate_right)
         elif filter_type == 5:
             match_result, mismatch_result = inner_filter_any(lottery_nums_group_b, duplicate_left, duplicate_right)
-
         # 判断保留还是去除
         if self.exclude_radio_btn.isChecked():
             match_result, mismatch_result = mismatch_result, match_result

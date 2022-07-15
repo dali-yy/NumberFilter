@@ -167,17 +167,18 @@ if __name__ == '__main__':
     # print(text.split(' '))
     # print(type(None))
 
-    text1 = '01 02 05 07 09 11 13\n01 02 03 04 05 06 07\n02 10 12 13 14 18 24\n03 04 10 15 18 19 24'
+    text1 = '1 2 3 4 5 6 7\n'
     text2 = '02 04 06 08 10 12 14\n01 02 03 04 05 06 08\n04 05 07 08 09 14 23\n03 04 13 15 18 19 24'
-    group_a = text_to_nums(text1, 7)['data']
-    group_b = text_to_nums(text2, 7)['data']
+    group_a = text_to_nums(text1, 7)
+    print(group_a)
+    # group_b = text_to_nums(text2, 7)['data']
     # match_result, dismatch_result = inner_filter_any(group_a, 4, 7)
     # match_result, dismatch_result = inner_filter_any(group_b, 4, 7)
     # match_result, dismatch_result = outer_filter_all(group_a, group_b, 0, 3)
     # match_result, dismatch_result = outer_filter_all(group_b, group_a, 0, 3)
     # match_result, dismatch_result = outer_filter_any(group_a, group_b, 5, 7)
-    match_result, dismatch_result = outer_filter_any(group_b, group_a, 5, 7)
-    print('match: ', match_result)
-    print('dismatch: ', dismatch_result)
-    result = prize_analysize(match_result, ['01', '02', '03', '04', '05', '06', '07'])
-    print(result)
+    # match_result, dismatch_result = outer_filter_any(group_b, group_a, 5, 7)
+    # print('match: ', match_result)
+    # print('dismatch: ', dismatch_result)
+    # result = prize_analysize(match_result, ['01', '02', '03', '04', '05', '06', '07'])
+    # print(result)
