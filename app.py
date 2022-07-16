@@ -389,7 +389,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.prize_number_layout = QtWidgets.QGridLayout()       
 
         # 设置中奖号码框架
-        self.num_btns = [QtWidgets.QPushButton(str(idx + 1)) for idx in range(33)]
+        self.num_btns = [QtWidgets.QPushButton('0' + str(idx + 1) if idx < 9 else str(idx + 1)) for idx in range(33)]
         for idx, btn in enumerate(self.num_btns):
             btn.setObjectName('num_btn')
             btn.setCheckable(True)
@@ -404,7 +404,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.analysis_result_tree = QtWidgets.QTreeWidget()
         self.analysis_result_tree.setObjectName('analysis_result_tree')
         self.analysis_result_tree.setHeaderLabels(['注数', '序号', '中奖号码'])
-        self.analysis_result_tree.setColumnWidth(0, 330)
+        self.analysis_result_tree.setColumnWidth(0, 250)
         self.analysis_result_tree.setColumnWidth(1, 100)
         
         # 重置按钮
@@ -586,7 +586,7 @@ class MainUi(QtWidgets.QMainWindow):
                                     QMessageBox.Yes, QMessageBox.Yes)
                 return
             if conversion_a['code'] == -2:
-                QMessageBox.warning(self, "提示", "A 框第{}行彩票号码存在重复号码！".format(conversion_a.data),
+                QMessageBox.warning(self, "提示", "A 框第{}行彩票号码存在重复号码！".format(conversion_a['data']),
                                     QMessageBox.Yes, QMessageBox.Yes)
                 return
             lottery_nums_group_a = conversion_a['data']
@@ -603,7 +603,7 @@ class MainUi(QtWidgets.QMainWindow):
                                     QMessageBox.Yes, QMessageBox.Yes)
                 return
             if conversion_b['code'] == -2:
-                QMessageBox.warning(self, "提示", "B 框第{}行彩票号码存在重复号码！".format(conversion_b.data),
+                QMessageBox.warning(self, "提示", "B 框第{}行彩票号码存在重复号码！".format(conversion_b['data']),
                                     QMessageBox.Yes, QMessageBox.Yes)
                 return
             lottery_nums_group_b = conversion_b['data']
@@ -658,7 +658,7 @@ class MainUi(QtWidgets.QMainWindow):
             tmp_item = QtWidgets.QListWidgetItem('序号' + '\t\t' + '彩票号码')
             self.result_list_C.addItem(tmp_item)
             for idx, result in enumerate(self.filter_results):
-                tmp_item = QtWidgets.QListWidgetItem(str(idx) + '\t\t' + ' '.join(result))
+                tmp_item = QtWidgets.QListWidgetItem(str(idx + 1) + '\t\t' + ' '.join(result))
                 self.result_list_C.addItem(tmp_item)
         else:
             QMessageBox.warning(self, "提示", "过滤结果为空！".format(len(mismatch_result), fault_left),
@@ -672,13 +672,15 @@ class MainUi(QtWidgets.QMainWindow):
         if sender.isChecked():
             sender.setStyleSheet("""
                 QPushButton {
-                    color: #1890ff;
+                    background: #1E90FF;
+                    color: #fff;
                 }
             """)
             self.selected_num_btns.append(sender)
         else:
             sender.setStyleSheet("""
             QPushButton {
+                background: #fff;
                 color: #1c1e21;
                 }
             """)
@@ -710,7 +712,7 @@ class MainUi(QtWidgets.QMainWindow):
         
         # 选择的号码个数不能与彩票类型不符
         if len(self.selected_num_btns) != self.prize_count:
-            QMessageBox.warning(self, "提示", '中奖号码个数错误！', QMessageBox.Yes, QMessageBox.Yes)
+            QMessageBox.warning(self, "提示", '中奖号码个数应为{}个！'.format(self.prize_count), QMessageBox.Yes, QMessageBox.Yes)
             return
 
         prize_nums= [int(btn.text()) for btn in self.selected_num_btns]  # 中奖号码
@@ -721,7 +723,7 @@ class MainUi(QtWidgets.QMainWindow):
         # 显示新的分析结果
         for key, value in analysis_result.items():
             tmp_root = QtWidgets.QTreeWidgetItem(self.analysis_result_tree)
-            tmp_root.setText(0,'匹配{}个号码的有： {} 注'.format(key, len(value)))
+            tmp_root.setText(0, '中{}个号： {} 注'.format(key, len(value)))
             for lottery in value:
                 tmp_child = QtWidgets.QTreeWidgetItem(tmp_root)
                 tmp_child.setText(1, str(lottery['id']))

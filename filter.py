@@ -136,7 +136,7 @@ def prize_analysize(filter_nums_group: list, prize_nums: list):
     for idx, nums in enumerate(filter_nums_group):
         duplicate = compare_lottery_nums(nums, prize_nums)
         analysis_result[duplicate].append({
-            'id': idx,
+            'id': idx + 1,
             'nums': nums
         })
 
