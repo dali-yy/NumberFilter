@@ -5,6 +5,20 @@
 # @File : filter.py
 # @Software: PyCharm
 import re
+import itertools
+
+
+def match_line(text: str, count: int):
+    """
+    是否匹配
+    :param count:
+    :param text:
+    :return:
+    """
+    pattern = r'\d{2}\s' * (count - 1) + r'\d{2}'
+    # 正则匹配字符串
+    return re.search(pattern, text)
+
 
 def text_to_nums(text: str, count: int):
     """
@@ -12,36 +26,20 @@ def text_to_nums(text: str, count: int):
     """
     nums_list = []  # 数字列表
     for idx, line in enumerate(text.split('\n')):
-        # 正则匹配字符串
-        pattern = (r'\d{1,2}\s+')*(count - 1) + (r'\d{1,2}\s*')
-        result = re.search(pattern, line)
-        # 无匹配模式的字符串
+        result = match_line(line, count)
         if result is None:
-            return {'code': -1, 'data': idx}
-        # 号码按空格分隔
-        nums = line.split(' ')
-        # 防止用户意外输入空格
-        while(nums.count('')):
-            nums.remove('')
-        # 判断输入的号码个数是否和彩票类型相符
-        if len(set(nums)) != count:
-            return {'code': -2, 'data': idx}
+            return {'flag': False, 'data': idx}
         else:
-            nums_list.append(nums)
-    return {'code': 1, 'data': nums_list}
+            nums_list.append(result.group().split(' '))
+    return {'flag': True, 'data': nums_list}
 
 
 def compare_lottery_nums(lottery_nums_a: list, lottery_nums_b: list):
     """
     彩票号码对比
     """
-    lottery_nums_a = [int(a) for a in lottery_nums_a]
-    lottery_nums_b = [int(b) for b in lottery_nums_b]
-    duplicate = 0
-    # 比较彩票号码
-    for num in lottery_nums_a:
-        duplicate += 1 if num in lottery_nums_b else 0
-    return duplicate  # 返回重复的个数
+    # 返回重复的个数
+    return len(set(lottery_nums_a) & set(lottery_nums_b))
 
 
 def match_all(lottery_nums, lottery_nums_group, left, right):
@@ -63,7 +61,7 @@ def match_any(lottery_nums, lottery_nums_group, left, right):
     for nums in lottery_nums_group:
         duplicate = compare_lottery_nums(lottery_nums, nums)
         # 如果存在满足条件的号码，则直接返回True
-        if duplicate >= left and duplicate <= right:
+        if left <= duplicate <= right:
             return True
     return False
 
@@ -116,13 +114,38 @@ def inner_filter_any(lottery_nums_group: list, left: int, right: int):
 
     # 遍历号码组
     for idx, nums in enumerate(lottery_nums_group):
-        other_nums = lottery_nums_group[0: idx] + lottery_nums_group[idx + 1: n]  # 除当前号码外的其他组号码
+        other_nums = lottery_nums_group[idx + 1: n] + lottery_nums_group[0: idx]  # 除当前号码外的其他组号码
         if match_any(nums, other_nums, left, right):
             match_result.append(nums)
         else:
             mismatch_result.append(nums)
 
     # 返回过滤结果
+    return match_result, mismatch_result
+
+
+def exist_all(num, nums_group):
+    """
+    判断每组号码中是否包含该号码
+    :param num:
+    :param nums_group:
+    :return:
+    """
+    for nums in nums_group:
+        if num not in nums:
+            return False
+    return True
+
+
+def gen_inner_all(lottery_nums_group, total_count, prize_count, left, right):
+    """
+    根据已有号码生成
+    :return:
+    """
+    all_nums = [('0' if idx < 9 else '') + str(idx + 1) for idx in range(total_count)]
+    # 所有组合
+    all_combinations = list(itertools.combinations(all_nums, prize_count))
+    match_result, mismatch_result = outer_filter_all(all_combinations, lottery_nums_group, left, right)
     return match_result, mismatch_result
 
 
@@ -144,41 +167,16 @@ def prize_analysize(filter_nums_group: list, prize_nums: list):
 
 
 if __name__ == '__main__':
-    group_a = [
-        [1, 2, 3, 4, 5, 7],
-        [2, 3, 4, 5, 6, 7]
-    ]
-    group_b = [
-        [3, 4, 5, 6, 7, 8],
-        [2, 4, 6, 8, 10, 12],
+    fa = open('data/a.txt', mode='r')
+    fb = open('data/b.txt', mode='r')
+    text_a = fa.read().strip().strip('\n')
+    text_b = fb.read().strip().strip('\n')
+    nums_a = text_to_nums(text_a, 7)['data']
+    nums_b = text_to_nums(text_b, 7)['data']
+    # match_result, mismatch_result = gen_inner_all(nums_a, 24, 7, 1, 7)
+    match_result, mismatch_result = gen_inner_all(nums_b, 24, 7, 0, 7)
 
-        [2, 3, 5, 6, 7, 12]
-    ]
-    # match_result, mismatch_result = outer_filter_all(group_b, group_a, 4, 5)
-    # match_result, mismatch_result = outer_filter_any(group_b, group_a, 4, 5)
-    # match_result, mismatch_result = inner_filter_any(group_b, 4, 5)
-    # analysis_result = prize_analysize(group_b, [0, 1, 2, 3, 4, 5])
-    # print(match_result)
-    # print(mismatch_result)
-    # print(analysis_result)
+    print(match_result)
 
-    # text = '01 02 03 04  05 06'
-    # print(text_to_nums_list(text, 6))
-    # print(text.split(' '))
-    # print(type(None))
-
-    text1 = '1 2 3 4 5 6 7\n'
-    text2 = '02 04 06 08 10 12 14\n01 02 03 04 05 06 08\n04 05 07 08 09 14 23\n03 04 13 15 18 19 24'
-    group_a = text_to_nums(text1, 7)
-    print(group_a)
-    # group_b = text_to_nums(text2, 7)['data']
-    # match_result, dismatch_result = inner_filter_any(group_a, 4, 7)
-    # match_result, dismatch_result = inner_filter_any(group_b, 4, 7)
-    # match_result, dismatch_result = outer_filter_all(group_a, group_b, 0, 3)
-    # match_result, dismatch_result = outer_filter_all(group_b, group_a, 0, 3)
-    # match_result, dismatch_result = outer_filter_any(group_a, group_b, 5, 7)
-    # match_result, dismatch_result = outer_filter_any(group_b, group_a, 5, 7)
-    # print('match: ', match_result)
-    # print('dismatch: ', dismatch_result)
-    # result = prize_analysize(match_result, ['01', '02', '03', '04', '05', '06', '07'])
-    # print(result)
+    fa.close()
+    fb.close()
