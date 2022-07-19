@@ -4,6 +4,7 @@
 # @Site : 
 # @File : filter.py
 # @Software: PyCharm
+from cgi import test
 import re
 import itertools
 
@@ -178,6 +179,7 @@ if __name__ == '__main__':
 
     print(match_result)
     print(mismatch_result)
+    print(test)
 
     fa.close()
     fb.close()
