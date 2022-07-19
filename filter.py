@@ -4,9 +4,9 @@
 # @Site : 
 # @File : filter.py
 # @Software: PyCharm
-from cgi import test
 import re
 import itertools
+import numpy as np
 
 
 def match_line(text: str, count: int):
@@ -125,19 +125,6 @@ def inner_filter_any(lottery_nums_group: list, left: int, right: int):
     return match_result, mismatch_result
 
 
-def exist_all(num, nums_group):
-    """
-    判断每组号码中是否包含该号码
-    :param num:
-    :param nums_group:
-    :return:
-    """
-    for nums in nums_group:
-        if num not in nums:
-            return False
-    return True
-
-
 def gen_inner_all(lottery_nums_group, total_count, prize_count, left, right):
     """
     根据已有号码生成
@@ -148,6 +135,15 @@ def gen_inner_all(lottery_nums_group, total_count, prize_count, left, right):
     all_combinations = list(itertools.combinations(all_nums, prize_count))
     match_result, mismatch_result = outer_filter_all(all_combinations, lottery_nums_group, left, right)
     return match_result, mismatch_result
+
+def count_nums(filter_results):
+    """
+    
+    统计过滤结果中每个号码出现的次数
+    """
+    nums_flat = np.array(filter_results, dtype='int64').flatten()# 展平数组
+    counts = np.bincount(nums_flat)
+    return counts
 
 
 def prize_analysize(filter_nums_group: list, prize_nums: list):
@@ -167,6 +163,7 @@ def prize_analysize(filter_nums_group: list, prize_nums: list):
     return analysis_result
 
 
+
 if __name__ == '__main__':
     fa = open('data/a.txt', mode='r')
     fb = open('data/b.txt', mode='r')
@@ -175,11 +172,8 @@ if __name__ == '__main__':
     nums_a = text_to_nums(text_a, 7)['data']
     nums_b = text_to_nums(text_b, 7)['data']
     # match_result, mismatch_result = gen_inner_all(nums_a, 24, 7, 1, 7)
-    match_result, mismatch_result = gen_inner_all(nums_b, 24, 7, 0, 7)
-
-    print(match_result)
-    print(mismatch_result)
-    print(test)
+    # match_result, mismatch_result = gen_inner_all(nums_b, 24, 7, 0, 7)
 
     fa.close()
     fb.close()
+    print(count_nums(nums_a))

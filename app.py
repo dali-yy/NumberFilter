@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
 from filter import match_line, text_to_nums, match_all, match_any, prize_analysize
+from CountWindow import CountWindow
 
 
 class MainUi(QtWidgets.QMainWindow):
@@ -22,6 +23,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.selected_num_btns = []  # 选中的中奖号码
 
         self.clipboard = QtWidgets.QApplication.clipboard()  # 剪切板
+
+        self.count_window = CountWindow()
+        self.show()
 
         # 设置应用名称
         self.setWindowTitle("彩票号码过滤器")
@@ -324,33 +328,39 @@ class MainUi(QtWidgets.QMainWindow):
         self.progress_bar_C.setMaximum(100)
         self.progress_bar_C.setValue(0)
         # C 输入框清空按钮
-        self.clear_btn_C = QtWidgets.QPushButton('清  空')
+        self.clear_btn_C = QtWidgets.QPushButton('清 空')
         self.clear_btn_C.setObjectName('clear_btn')
-        self.clear_btn_C.setFixedSize(QtCore.QSize(130, 50))
+        self.clear_btn_C.setFixedSize(QtCore.QSize(100, 50))
         self.clear_btn_C.setCursor(QtCore.Qt.PointingHandCursor)
         self.clear_btn_C.clicked.connect(self.reset_C)
         # C 框复制内容按钮
-        self.copy_btn_C = QtWidgets.QPushButton('复  制')
+        self.copy_btn_C = QtWidgets.QPushButton('复 制')
         self.copy_btn_C.setObjectName('copy_btn')
-        self.copy_btn_C.setFixedSize(QtCore.QSize(130, 50))
+        self.copy_btn_C.setFixedSize(QtCore.QSize(100, 50))
         self.copy_btn_C.setCursor(QtCore.Qt.PointingHandCursor)
         self.copy_btn_C.clicked.connect(self.on_copy_c)
         # C 框复制内容按钮
-        self.paste_btn_C = QtWidgets.QPushButton('粘贴')
+        self.paste_btn_C = QtWidgets.QPushButton('粘 贴')
         self.paste_btn_C.setObjectName('paste_btn')
-        self.paste_btn_C.setFixedSize(QtCore.QSize(130, 50))
+        self.paste_btn_C.setFixedSize(QtCore.QSize(100, 50))
         self.paste_btn_C.setCursor(QtCore.Qt.PointingHandCursor)
         self.paste_btn_C.clicked.connect(self.on_paste_c)
         # 过滤按钮
-        self.filter_btn = QtWidgets.QPushButton('过  滤')
+        self.filter_btn = QtWidgets.QPushButton('过 滤')
         self.filter_btn.setObjectName('filter_btn')
-        self.filter_btn.setFixedSize(QtCore.QSize(130, 50))
+        self.filter_btn.setFixedSize(QtCore.QSize(100, 50))
         self.filter_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.filter_btn.clicked.connect(self.filter_num)
+        # 出现次数统计按钮
+        self.count_btn = QtWidgets.QPushButton('出现次数')
+        self.count_btn.setObjectName('prize_analysis_btn')
+        self.count_btn.setFixedSize(QtCore.QSize(120, 50))
+        self.count_btn.setCursor(QtCore.Qt.PointingHandCursor)
+        self.count_btn.clicked.connect(self.show_count_window)
         # 中奖分析按钮
         self.prize_analysis_btn = QtWidgets.QPushButton('中奖分析')
         self.prize_analysis_btn.setObjectName('prize_analysis_btn')
-        self.prize_analysis_btn.setFixedSize(QtCore.QSize(130, 50))
+        self.prize_analysis_btn.setFixedSize(QtCore.QSize(120, 50))
         self.prize_analysis_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.prize_analysis_btn.clicked.connect(self.to_prize_analysis)
         # C 框架布局
@@ -364,7 +374,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.layout_C.addWidget(self.copy_btn_C, 21, 2, 3, 2, alignment=QtCore.Qt.AlignCenter)
         self.layout_C.addWidget(self.paste_btn_C, 21, 4, 3, 2, alignment=QtCore.Qt.AlignCenter)
         self.layout_C.addWidget(self.filter_btn, 21, 6, 3, 2, alignment=QtCore.Qt.AlignCenter)
-        self.layout_C.addWidget(self.prize_analysis_btn, 21, 8, 3, 4, alignment=QtCore.Qt.AlignRight)
+        self.layout_C.addWidget(self.count_btn, 21, 8, 3, 2, alignment=QtCore.Qt.AlignCenter)
+        self.layout_C.addWidget(self.prize_analysis_btn, 21, 10, 3, 2, alignment=QtCore.Qt.AlignRight)
         self.frame_C.setLayout(self.layout_C)
 
         # 设置内容部件部件
@@ -437,6 +448,10 @@ class MainUi(QtWidgets.QMainWindow):
 
         self.prize_number_frame.setLayout(self.prize_number_layout)
 
+        # 显示选中号码的标签
+        self.prize_number_label = QtWidgets.QLabel('已选 0 个：')
+        self.prize_number_label.setObjectName('prize_number_label')
+
         # 中奖分析结果展示
         self.analysis_result_tree = QtWidgets.QTreeWidget()
         self.analysis_result_tree.setObjectName('analysis_result_tree')
@@ -470,6 +485,7 @@ class MainUi(QtWidgets.QMainWindow):
 
         self.analysis_layout = QtWidgets.QVBoxLayout()
         self.analysis_layout.addWidget(self.prize_number_frame, stretch=3)
+        self.analysis_layout.addWidget(self.prize_number_label, stretch=1)
         self.analysis_layout.addWidget(self.analysis_result_tree, stretch=4)
         self.analysis_layout.addLayout(self.analysis_operate_layout, stretch=1)
         self.analysis_widget.setLayout(self.analysis_layout)
@@ -479,6 +495,12 @@ class MainUi(QtWidgets.QMainWindow):
             QFrame#prize_number_frame {
                 border: 2px solid black;
                 border-radius: 5px;
+            }
+
+            QLabel#prize_number_label {
+                font-size: 26px;
+                font-weight: 500;
+                font-family: '黑体';
             }
 
             QTreeWidget#analysis_result_tree {
@@ -679,6 +701,14 @@ class MainUi(QtWidgets.QMainWindow):
         self.clipboard.setText(text)
         QMessageBox.information(self, "提示", "C 框号码复制成功！", QMessageBox.Yes, QMessageBox.Yes)
 
+    def show_count_window(self):
+        """
+        显示号码统计结果
+        """
+        if self.result_table_C.rowCount() == 0:
+            QMessageBox.warning(self, "提示", "未过滤或粘贴彩票号码，不能进行统计单号出现次数！", QMessageBox.Yes, QMessageBox.Yes)
+            return
+
     def filter_num(self):
         """
         号码过滤
@@ -851,6 +881,11 @@ class MainUi(QtWidgets.QMainWindow):
                 }
             """)
             self.selected_num_btns.remove(sender)
+        prize_nums = [btn.text() for btn in self.selected_num_btns]  # 中奖号码
+        prize_nums.sort()  # 按序显示
+        # 修改显示选中号码标签
+        self.prize_number_label.setText('已选 {} 个：'.format(len(prize_nums)) + '  '.join(prize_nums))
+        
 
     def reset_analysis(self):
         """
@@ -867,6 +902,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.selected_num_btns = []
         # 清空分析结果
         self.analysis_result_tree.clear()
+        # 修改选中号码标签
+        self.prize_number_label.setText('已选 0 个：')
 
     def on_prize_analysize(self):
         """
