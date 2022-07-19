@@ -6,7 +6,6 @@
 # @Software: PyCharm
 import re
 import itertools
-import numpy as np
 
 
 def match_line(text: str, count: int):
@@ -136,14 +135,20 @@ def gen_inner_all(lottery_nums_group, total_count, prize_count, left, right):
     match_result, mismatch_result = outer_filter_all(all_combinations, lottery_nums_group, left, right)
     return match_result, mismatch_result
 
-def count_nums(filter_results):
+
+def count_nums(filter_results, total_count):
     """
-    
     统计过滤结果中每个号码出现的次数
     """
-    nums_flat = np.array(filter_results, dtype='int64').flatten()# 展平数组
-    counts = np.bincount(nums_flat)
-    return counts
+    count_dict = {}  # 记录号码出现次数的字典
+    # 所有号码
+    lottery_nums = [('0' if idx < 9 else '') + str(idx + 1) for idx in range(total_count)]
+    # 展开列表
+    nums_flat = [num for nums in filter_results for num in nums]
+    # 求所有号码出现的次数
+    for lottery_num in lottery_nums:
+        count_dict[lottery_num] = nums_flat.count(lottery_num)
+    return count_dict
 
 
 def prize_analysize(filter_nums_group: list, prize_nums: list):
@@ -163,7 +168,6 @@ def prize_analysize(filter_nums_group: list, prize_nums: list):
     return analysis_result
 
 
-
 if __name__ == '__main__':
     fa = open('data/a.txt', mode='r')
     fb = open('data/b.txt', mode='r')
@@ -176,4 +180,4 @@ if __name__ == '__main__':
 
     fa.close()
     fb.close()
-    print(count_nums(nums_a))
+    print(count_nums(nums_a, 24))

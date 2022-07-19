@@ -9,7 +9,7 @@ import itertools
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
-from filter import match_line, text_to_nums, match_all, match_any, prize_analysize
+from filter import match_line, text_to_nums, match_all, match_any, count_nums, prize_analysize
 from CountWindow import CountWindow
 
 
@@ -25,7 +25,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.clipboard = QtWidgets.QApplication.clipboard()  # 剪切板
 
         self.count_window = CountWindow()
-        self.show()
 
         # 设置应用名称
         self.setWindowTitle("彩票号码过滤器")
@@ -578,28 +577,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.duplicate_left_spin.setMaximum(prize_count)
         self.duplicate_right_spin.setMaximum(prize_count)
 
-    def to_prize_analysis(self):
-        """
-        进入中奖分析
-        """
-        if self.result_table_C.rowCount() == 0:
-            QMessageBox.warning(self, "提示", "未过滤或粘贴彩票号码，不能进行中奖分析！", QMessageBox.Yes, QMessageBox.Yes)
-            return
-        self.filter_results = []
-        for row in range(self.result_table_C.rowCount()):
-            item = self.result_table_C.item(row, 0)
-            text = item.text().strip() if item is not None else ''
-            match_result = match_line(text, self.prize_count)
-
-            if match_result is None:
-                QMessageBox.warning(self, "提示",
-                                    "C表格第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(row + 1,
-                                                                                                self.prize_count),
-                                    QMessageBox.Yes, QMessageBox.Yes)
-                return
-            self.filter_results.append(match_result.group().split(' '))
-        self.change_widget(self.analysis_widget)
-
     def reset_A(self):
         """
         重置A
@@ -701,13 +678,58 @@ class MainUi(QtWidgets.QMainWindow):
         self.clipboard.setText(text)
         QMessageBox.information(self, "提示", "C 框号码复制成功！", QMessageBox.Yes, QMessageBox.Yes)
 
+    def get_nums_from_result_table(self):
+        """
+        从结果表格中获取结果号码
+        :return:
+        """
+        if self.result_table_C.rowCount() == 0:
+            QMessageBox.warning(self, "提示", "未过滤或粘贴彩票号码！", QMessageBox.Yes, QMessageBox.Yes)
+            return False
+        self.filter_results = []
+        for row in range(self.result_table_C.rowCount()):
+            item = self.result_table_C.item(row, 0)
+            text = item.text().strip() if item is not None else ''
+            match_result = match_line(text, self.prize_count)
+
+            if match_result is None:
+                QMessageBox.warning(self, "提示",
+                                    "C表格第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(row + 1,
+                                                                                                self.prize_count),
+                                    QMessageBox.Yes, QMessageBox.Yes)
+                return False
+            self.filter_results.append(match_result.group().split(' '))
+            return True
+
     def show_count_window(self):
         """
         显示号码统计结果
         """
-        if self.result_table_C.rowCount() == 0:
-            QMessageBox.warning(self, "提示", "未过滤或粘贴彩票号码，不能进行统计单号出现次数！", QMessageBox.Yes, QMessageBox.Yes)
+        # 获取过滤结果
+        if not self.get_nums_from_result_table():
             return
+
+        # 统计出现次数
+        count_dict = count_nums(self.filter_results, self.total_count)
+        # 设置表格行数
+        self.count_window.count_table.setRowCount(len(count_dict))
+        # 填充表格
+        for idx, (key, value) in enumerate(count_dict.items()):
+            num_item = QtWidgets.QTableWidgetItem(key)
+            num_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.count_window.count_table.setItem(idx, 0, num_item)
+            count_item = QtWidgets.QTableWidgetItem(str(value))
+            count_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.count_window.count_table.setItem(idx, 1, count_item)
+        self.count_window.show()
+
+    def to_prize_analysis(self):
+        """
+        进入中奖分析
+        """
+        if not self.get_nums_from_result_table():
+            return
+        self.change_widget(self.analysis_widget)
 
     def filter_num(self):
         """
@@ -718,7 +740,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.progress_bar_C.setValue(0)
         # 过滤类型
         filter_type = self.filter_type_combobox.currentIndex()
-
+        # 重复个数左右边界
         duplicate_left = self.duplicate_left_spin.value()
         duplicate_right = self.duplicate_right_spin.value()
         # 重复个数左边界不能大于右边界
@@ -726,16 +748,15 @@ class MainUi(QtWidgets.QMainWindow):
             QMessageBox.warning(self, "提示", "重复个数范围错误！左边界不能大于右边界！", QMessageBox.Yes, QMessageBox.Yes)
             return
 
+        # 容错个数左右边界
         fault_left = self.fault_left_spin.value()
         fault_right = self.fault_right_spin.value()
         # 容错个数左边界不能大于右边界
         if fault_left > fault_right:
             QMessageBox.warning(self, "提示", "容错个数范围错误！左边界不能大于右边界！", QMessageBox.Yes, QMessageBox.Yes)
             return
-
         # 获取彩票号码个数
         prize_count = self.prize_spin.value()
-
         lottery_nums_group_a = []
         lottery_nums_group_b = []
         # 获取 A 输入框中的内容
@@ -747,8 +768,9 @@ class MainUi(QtWidgets.QMainWindow):
             conversion_a = text_to_nums(text_a, prize_count)
             if not conversion_a['flag']:
                 QMessageBox.warning(self, "提示",
-                                    "A 框第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(conversion_a['data'],
-                                                                                                self.prize_count),
+                                    "A 框第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(
+                                                                                                 conversion_a['data'],
+                                                                                                 self.prize_count),
                                     QMessageBox.Yes, QMessageBox.Yes)
                 return
             lottery_nums_group_a = conversion_a['data']
@@ -759,19 +781,19 @@ class MainUi(QtWidgets.QMainWindow):
             if not text_b:
                 QMessageBox.warning(self, "提示", "B 框未输入彩票号码！", QMessageBox.Yes, QMessageBox.Yes)
                 return
-            conversion_b = text_to_nums(text_b, prize_count)
-            if not conversion_b['flag']:
+            conversion_a = text_to_nums(text_b, prize_count)
+            if not conversion_a['flag']:
                 QMessageBox.warning(self, "提示",
-                                    "B 框第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(conversion_b['data'],
+                                    "B 框第{}行彩票号码格式错误！每行需要包含{}个号码，号码之间用空格隔开，且不能存在数字之外的字符".format(conversion_a['data'],
                                                                                                 self.prize_count),
                                     QMessageBox.Yes, QMessageBox.Yes)
                 return
-            lottery_nums_group_b = conversion_b['data']
+            lottery_nums_group_b = conversion_a['data']
 
         # 根据下拉列表选择的方式进行过滤
+        self.filter_btn.setDisabled(True)
         match_result = []
         mismatch_result = []
-        self.filter_btn.setDisabled(True)
         if filter_type == 0 or filter_type == 1:
             if filter_type == 1:
                 lottery_nums_group_a, lottery_nums_group_b = lottery_nums_group_b, lottery_nums_group_a
@@ -885,7 +907,6 @@ class MainUi(QtWidgets.QMainWindow):
         prize_nums.sort()  # 按序显示
         # 修改显示选中号码标签
         self.prize_number_label.setText('已选 {} 个：'.format(len(prize_nums)) + '  '.join(prize_nums))
-        
 
     def reset_analysis(self):
         """
