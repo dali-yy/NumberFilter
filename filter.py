@@ -177,6 +177,7 @@ if __name__ == '__main__':
     match_result, mismatch_result = gen_inner_all(nums_b, 24, 7, 0, 7)
 
     print(match_result)
+    print(mismatch_result)
 
     fa.close()
     fb.close()
