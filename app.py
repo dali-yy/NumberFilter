@@ -699,7 +699,7 @@ class MainUi(QtWidgets.QMainWindow):
                                     QMessageBox.Yes, QMessageBox.Yes)
                 return False
             self.filter_results.append(match_result.group().split(' '))
-            return True
+        return True
 
     def show_count_window(self):
         """
