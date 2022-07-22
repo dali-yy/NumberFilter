@@ -961,6 +961,12 @@ class MainUi(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     # 创建应用程序对象
     app = QtWidgets.QApplication(sys.argv)
+
+    # 汉化
+    translator = QtCore.QTranslator()
+    translator.load('widgets_zh_CN.qm')
+    app.installTranslator(translator)
+
     # 新建窗口
     gui = MainUi()
     # 显示在屏幕上
