@@ -8,29 +8,31 @@ import re
 import itertools
 
 
-def match_line(text: str, count: int):
+def match_line(text: str):
     """
     是否匹配
-    :param count:
     :param text:
     :return:
     """
-    pattern = r'\d{2}\s' * (count - 1) + r'\d{2}'
+    pattern = r'(\d{2}\s+)*\d{2}'
     # 正则匹配字符串
     return re.search(pattern, text)
 
 
-def text_to_nums(text: str, count: int):
+def text_to_nums(text: str):
     """
     将彩票号码文本转换成数字列表
     """
     nums_list = []  # 数字列表
     for idx, line in enumerate(text.split('\n')):
-        result = match_line(line, count)
+        result = match_line(line.strip())
         if result is None:
             return {'flag': False, 'data': idx}
         else:
-            nums_list.append(result.group().split(' '))
+            nums = result.group().split(' ')
+            while '' in nums:
+                nums.remove('')
+            nums_list.append(nums)
     return {'flag': True, 'data': nums_list}
 
 
@@ -136,6 +138,26 @@ def gen_inner_all(lottery_nums_group, total_count, prize_count, left, right):
     return match_result, mismatch_result
 
 
+def get_combinations(nums, left, right):
+    """
+    获取一组号码的排列组合
+    :param nums:
+    :param left:
+    :param right:
+    :return:
+    """
+    combinations = []  # 组合数
+    count = len(nums)  # 该组号码的个数
+    # 数字的个数大于左边界
+    if count > left:
+        # 右边界取较小者
+        _right = count + 1 if count < right else right + 1
+        # 该组号码对应的组合
+        for idx in range(left, _right):
+            combinations += list(itertools.combinations(nums, idx))
+    return combinations
+
+
 def count_nums(filter_results, total_count):
     """
     统计过滤结果中每个号码出现的次数
@@ -169,15 +191,16 @@ def prize_analysize(filter_nums_group: list, prize_nums: list):
 
 
 if __name__ == '__main__':
-    fa = open('data/a.txt', mode='r')
-    fb = open('data/b.txt', mode='r')
-    text_a = fa.read().strip().strip('\n')
-    text_b = fb.read().strip().strip('\n')
-    nums_a = text_to_nums(text_a, 7)['data']
-    nums_b = text_to_nums(text_b, 7)['data']
-    # match_result, mismatch_result = gen_inner_all(nums_a, 24, 7, 1, 7)
-    # match_result, mismatch_result = gen_inner_all(nums_b, 24, 7, 0, 7)
-
-    fa.close()
-    fb.close()
-    print(count_nums(nums_a, 24))
+    # fa = open('data/a.txt', mode='r')
+    # fb = open('data/b.txt', mode='r')
+    # text_a = fa.read().strip().strip('\n')
+    # text_b = fb.read().strip().strip('\n')
+    # nums_a = text_to_nums(text_a, 7)['data']
+    # nums_b = text_to_nums(text_b, 7)['data']
+    #
+    # fa.close()
+    # fb.close()
+    # combinations = get_combinations(['01', '02', '03', '05'], 2, 3)
+    # print(combinations)
+    # print(''.join(tuple()))
+    print(compare_lottery_nums([1, 2, 4], [1, 3]))
