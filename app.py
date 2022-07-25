@@ -981,9 +981,10 @@ class MainUi(QtWidgets.QMainWindow):
                 QtWidgets.QApplication.processEvents()  # 刷新屏幕
                 self.progress_bar_D.setValue(int((idx + 1) / len(lottery_nums_group_c) * 100))  # 更新进度条
                 combination = get_combinations(nums, duplicate_left, duplicate_right)
-                self.combinations.append(combination)
-                match_result += combination
-                match_result.append(tuple())
+                if combination:
+                    self.combinations.append(combination)
+                    match_result += combination
+                    match_result.append(tuple())
 
         # 判断保留还是去除
         if self.exclude_radio_btn.isChecked():
@@ -1007,7 +1008,10 @@ class MainUi(QtWidgets.QMainWindow):
             filter_results = filter_results[0: result_count] if result_count < len(
                 filter_results) else filter_results
         # 显示总共多少注
-        self.note_label_D.setText('注数： {}'.format(len(filter_results)))
+        notes = len(filter_results)
+        if self.combinations:
+            notes = sum([len(item) for item in self.combinations])
+        self.note_label_D.setText('注数： {}'.format(notes))
         # 清空D框中的内容
         self.result_table_D.clearContents()
         self.result_table_D.setRowCount(len(filter_results))
